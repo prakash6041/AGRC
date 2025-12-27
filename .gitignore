@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/MVP/FileContentIndex
+/.vs/MVP/v17
+/Agrc.Api/.vs
+/Agrc.Api/bin/Debug/net6.0
+/Agrc.Api/obj
