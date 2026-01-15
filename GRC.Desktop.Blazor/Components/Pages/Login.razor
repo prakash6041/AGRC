@@ -1,0 +1,137 @@
+@page "/login"
+@using GRC.Desktop.Blazor.Models
+@using GRC.Desktop.Blazor.Services
+@using GRC.Desktop.Blazor.Stores
+@inject AuthService AuthService
+@inject AuthStore AuthStore
+@inject NavigationManager Navigation
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">GRC Login</h1>
+        
+        <div class="form-group">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" placeholder="Enter email address"
+                   @bind="LoginModel.EmailAddress" />
+            @if (!string.IsNullOrEmpty(EmailError))
+            {
+                <small class="text-danger">@EmailError</small>
+            }
+        </div>
+
+        <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" placeholder="Enter password"
+                   @bind="LoginModel.Password" />
+            @if (!string.IsNullOrEmpty(PasswordError))
+            {
+                <small class="text-danger">@PasswordError</small>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @ErrorMessage
+            </div>
+        }
+
+        <div class="button-group">
+            <button class="btn btn-primary" @onclick="HandleLogin" disabled="@IsLoading">
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Logging in...</span>
+                }
+                else
+                {
+                    <span>Login</span>
+                }
+            </button>
+            <button class="btn btn-secondary" @onclick="HandleClear" disabled="@IsLoading">Clear</button>
+        </div>
+
+        <div class="form-footer">
+            <p>Don't have an account? <a href="/register">Register here</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginRequest LoginModel = new();
+    private string ErrorMessage = string.Empty;
+    private string EmailError = string.Empty;
+    private string PasswordError = string.Empty;
+    private bool IsLoading = false;
+
+    private async Task HandleLogin()
+    {
+        // Validation
+        EmailError = string.Empty;
+        PasswordError = string.Empty;
+        ErrorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(LoginModel.EmailAddress))
+        {
+            EmailError = "Email address is required";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(LoginModel.Password))
+        {
+            PasswordError = "Password is required";
+            return;
+        }
+
+        IsLoading = true;
+
+        try
+        {
+            var result = await AuthService.LoginAsync(LoginModel);
+            
+            if (result.Success)
+            {
+                if (result.RequiresOTP)
+                {
+                    // Store session ID for OTP verification
+                    SessionStorage.SessionId = result.SessionId ?? string.Empty;
+                    Navigation.NavigateTo("/verify-otp");
+                }
+                else
+                {
+                    // Login successful without OTP
+                    var session = new UserSession
+                    {
+                        Token = result.Token ?? string.Empty,
+                        EmailAddress = LoginModel.EmailAddress,
+                        LoginTime = DateTime.UtcNow,
+                        ExpiryTime = DateTime.UtcNow.AddHours(8)
+                    };
+                    AuthStore.SetSession(session);
+                    Navigation.NavigateTo("/dashboard");
+                }
+            }
+            else
+            {
+                ErrorMessage = result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void HandleClear()
+    {
+        LoginModel = new();
+        ErrorMessage = string.Empty;
+        EmailError = string.Empty;
+        PasswordError = string.Empty;
+    }
+}

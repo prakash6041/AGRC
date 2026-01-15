@@ -9,3 +9,5 @@
 /Agrc.Api/obj
 /.vs/AGRC/v17
 /.vs/AGRC/FileContentIndex
+/GRC.Desktop.Blazor/bin/Debug/net8.0-windows10.0.19041.0/win10-x64
+/GRC.Desktop.Blazor/obj

@@ -1,0 +1,10 @@
+﻿@page "/"
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Always redirect to login page on startup
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}

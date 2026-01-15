@@ -1,0 +1,68 @@
+@page "/dashboard"
+@using GRC.Desktop.Blazor.Stores
+@inject AuthStore AuthStore
+@inject NavigationManager Navigation
+
+<div class="dashboard-container">
+    @if (AuthStore.IsAuthenticated)
+    {
+        <div class="dashboard-header">
+            <h1>Welcome to GRC Dashboard</h1>
+            <p class="user-email">Logged in as: @AuthStore.CurrentSession?.EmailAddress</p>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Compliance Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Coming soon...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Risk Assessment</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Coming soon...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <button class="btn btn-danger" @onclick="HandleLogout">Logout</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            You are not authenticated. <a href="/login">Please login</a>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!AuthStore.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    private void HandleLogout()
+    {
+        AuthStore.ClearSession();
+        Navigation.NavigateTo("/login");
+    }
+}

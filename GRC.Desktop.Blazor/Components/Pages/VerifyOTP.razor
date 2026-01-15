@@ -1,0 +1,146 @@
+@page "/verify-otp"
+@using GRC.Desktop.Blazor.Models
+@using GRC.Desktop.Blazor.Services
+@using GRC.Desktop.Blazor.Stores
+@inject AuthService AuthService
+@inject AuthStore AuthStore
+@inject NavigationManager Navigation
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">Verify OTP</h1>
+        
+        <p class="otp-subtitle">
+            An OTP has been sent to your registered email address and mobile number.
+            Please enter the code below.
+        </p>
+
+        <div class="form-group">
+            <label for="otp" class="form-label">OTP Code</label>
+            <input type="text" class="form-control otp-input" id="otp" placeholder="Enter 6-digit OTP"
+                   maxlength="6" @bind="OTPCode" @onkeyup="HandleOTPInput" />
+            @if (!string.IsNullOrEmpty(OTPError))
+            {
+                <small class="text-danger">@OTPError</small>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @ErrorMessage
+            </div>
+        }
+
+        <div class="button-group">
+            <button class="btn btn-primary" @onclick="HandleVerifyOTP" 
+                    disabled="@(IsLoading || OTPCode.Length != 6)">
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Verifying...</span>
+                }
+                else
+                {
+                    <span>Verify OTP</span>
+                }
+            </button>
+            <button class="btn btn-secondary" @onclick="HandleResendOTP" disabled="@IsLoading">
+                Resend OTP
+            </button>
+        </div>
+
+        <div class="form-footer">
+            <p><a href="/login">Back to login</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string OTPCode = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private string OTPError = string.Empty;
+    private bool IsLoading = false;
+
+    protected override void OnInitialized()
+    {
+        if (string.IsNullOrEmpty(SessionStorage.SessionId))
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    private void HandleOTPInput(KeyboardEventArgs e)
+    {
+        // Only allow digits
+        if (OTPCode.Length > 0 && !OTPCode.All(char.IsDigit))
+        {
+            OTPCode = new string(OTPCode.Where(char.IsDigit).ToArray());
+        }
+        OTPError = string.Empty;
+    }
+
+    private async Task HandleVerifyOTP()
+    {
+        OTPError = string.Empty;
+        ErrorMessage = string.Empty;
+
+        if (OTPCode.Length != 6)
+        {
+            OTPError = "OTP must be 6 digits";
+            return;
+        }
+
+        if (!OTPCode.All(char.IsDigit))
+        {
+            OTPError = "OTP must contain only digits";
+            return;
+        }
+
+        IsLoading = true;
+
+        try
+        {
+            var request = new OTPVerificationRequest
+            {
+                SessionId = SessionStorage.SessionId,
+                OTPCode = OTPCode
+            };
+
+            var result = await AuthService.VerifyOTPAsync(request);
+            
+            if (result.Success)
+            {
+                var session = new UserSession
+                {
+                    Token = result.Token ?? string.Empty,
+                    LoginTime = DateTime.UtcNow,
+                    ExpiryTime = DateTime.UtcNow.AddHours(8)
+                };
+                AuthStore.SetSession(session);
+                SessionStorage.Clear();
+                Navigation.NavigateTo("/dashboard");
+            }
+            else
+            {
+                ErrorMessage = result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleResendOTP()
+    {
+        ErrorMessage = "OTP resent to your email and mobile number";
+        // Implement resend OTP logic through API
+        await Task.Delay(3000);
+        ErrorMessage = string.Empty;
+    }
+}

@@ -1,0 +1,199 @@
+@page "/register"
+@using GRC.Desktop.Blazor.Models
+@using GRC.Desktop.Blazor.Services
+@using GRC.Desktop.Blazor.Stores
+@inject AuthService AuthService
+@inject AuthStore AuthStore
+@inject NavigationManager Navigation
+
+<div class="auth-container">
+    <div class="auth-card auth-card-wide">
+        <h1 class="auth-title">GRC Registration</h1>
+        
+        <div class="form-group-horizontal">
+            <label for="orgType" class="form-label-horizontal">Organization Type</label>
+            <div class="org-type-group">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="consultant" 
+                           @onchange="@((ChangeEventArgs e) => RegisterModel.OrganizationType = OrganizationType.Consultant)"
+                           name="orgType" checked />
+                    <label class="form-check-label" for="consultant">Consultant</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="clientOrg" 
+                           @onchange="@((ChangeEventArgs e) => RegisterModel.OrganizationType = OrganizationType.ClientOrganization)"
+                           name="orgType" />
+                    <label class="form-check-label" for="clientOrg">Client Organization</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group-horizontal">
+            <label for="email" class="form-label-horizontal">Email Address</label>
+            <div style="flex: 1;">
+                <input type="email" class="form-control" id="email" placeholder="Enter email address"
+                       @bind="RegisterModel.EmailAddress" />
+                @if (!string.IsNullOrEmpty(EmailError))
+                {
+                    <small class="text-danger-horizontal">@EmailError</small>
+                }
+            </div>
+        </div>
+
+        <div class="form-group-horizontal">
+            <label for="password" class="form-label-horizontal">Password</label>
+            <input type="password" class="form-control" id="password" placeholder="Enter password"
+                   @bind="RegisterModel.Password" />
+        </div>
+
+        <div class="form-group-horizontal">
+            <label for="confirmPassword" class="form-label-horizontal">Confirm Password</label>
+            <div style="flex: 1;">
+                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm password"
+                       @bind="RegisterModel.ConfirmPassword" />
+                @if (!string.IsNullOrEmpty(PasswordError))
+                {
+                    <small class="text-danger-horizontal">@PasswordError</small>
+                }
+            </div>
+        </div>
+
+        <div class="form-group-horizontal">
+            <label for="roleType" class="form-label-horizontal">Role Type</label>
+            <select class="form-select" id="roleType" @bind="RegisterModel.RoleType">
+                <option value="@RoleType.ManagementApprover">Register as Management – Approver (2 approvers)</option>
+                <option value="@RoleType.SuperAdmin">Create Super Admin</option>
+                <option value="@RoleType.Admin">Create Admin</option>
+                <option value="@RoleType.Approver">Create Approver</option>
+                <option value="@RoleType.CheckerReviewer">Create Checker / Reviewer</option>
+                <option value="@RoleType.Maker">Create Maker</option>
+                <option value="@RoleType.ProcessOwner">Create Process Owner</option>
+                <option value="@RoleType.ControlOwner">Create Control Owner</option>
+                <option value="@RoleType.RiskOwner">Create Risk Owner</option>
+            </select>
+        </div>
+
+        <div class="form-group-horizontal">
+            <label for="mobile" class="form-label-horizontal">Mobile Number</label>
+            <input type="tel" class="form-control" id="mobile" placeholder="Enter mobile number"
+                   @bind="RegisterModel.MobileNumber" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @ErrorMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(SuccessMessage))
+        {
+            <div class="alert alert-success" role="alert">
+                @SuccessMessage
+            </div>
+        }
+
+        <div class="button-group">
+            <button class="btn btn-primary" @onclick="HandleRegister" disabled="@IsLoading">
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Registering...</span>
+                }
+                else
+                {
+                    <span>Register</span>
+                }
+            </button>
+            <button class="btn btn-secondary" @onclick="HandleClear" disabled="@IsLoading">Clear</button>
+        </div>
+
+        <div class="form-footer">
+            <p>Already have an account? <a href="/login">Login here</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterRequest RegisterModel = new() 
+    { 
+        OrganizationType = OrganizationType.Consultant 
+    };
+    
+    private string ErrorMessage = string.Empty;
+    private string SuccessMessage = string.Empty;
+    private string EmailError = string.Empty;
+    private string PasswordError = string.Empty;
+    private bool IsLoading = false;
+
+    private async Task HandleRegister()
+    {
+        // Validation
+        EmailError = string.Empty;
+        PasswordError = string.Empty;
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(RegisterModel.EmailAddress))
+        {
+            EmailError = "Email address is required";
+            return;
+        }
+
+        if (!RegisterModel.EmailAddress.Contains("@"))
+        {
+            EmailError = "Please enter a valid email address";
+            return;
+        }
+
+        if (RegisterModel.Password != RegisterModel.ConfirmPassword)
+        {
+            PasswordError = "Passwords do not match";
+            return;
+        }
+
+        if (RegisterModel.Password.Length < 8)
+        {
+            PasswordError = "Password must be at least 8 characters";
+            return;
+        }
+
+        IsLoading = true;
+
+        try
+        {
+            var result = await AuthService.RegisterAsync(RegisterModel);
+            
+            if (result.Success)
+            {
+                SuccessMessage = "Registration successful! Redirecting to login...";
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                ErrorMessage = result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void HandleClear()
+    {
+        RegisterModel = new() 
+        { 
+            OrganizationType = OrganizationType.Consultant 
+        };
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+        EmailError = string.Empty;
+        PasswordError = string.Empty;
+    }
+}

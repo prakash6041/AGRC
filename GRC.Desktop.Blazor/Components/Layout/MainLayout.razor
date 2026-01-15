@@ -1,0 +1,38 @@
+﻿@inherits LayoutComponentBase
+@using GRC.Desktop.Blazor.Stores
+@inject AuthStore AuthStore
+@inject NavigationManager Navigation
+
+<div class="page">
+    @if (AuthStore.IsAuthenticated)
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+
+        <main>
+            <div class="top-row px-4">
+                <span class="user-info">@AuthStore.CurrentSession?.EmailAddress</span>
+                <button class="btn btn-sm btn-danger" @onclick="HandleLogout">Logout</button>
+            </div>
+
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    }
+    else
+    {
+        <article class="content px-4">
+            @Body
+        </article>
+    }
+</div>
+
+@code {
+    private void HandleLogout()
+    {
+        AuthStore.ClearSession();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}
