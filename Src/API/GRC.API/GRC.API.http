@@ -1,6 +1,60 @@
 @GRC.API_HostAddress = http://localhost:5087
 
-GET {{GRC.API_HostAddress}}/weatherforecast/
+### Get Supported Countries
+GET {{GRC.API_HostAddress}}/api/auth/countries
 Accept: application/json
+
+###
+
+### User Registration with Valid Data (India)
+POST {{GRC.API_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "SecurePass@123",
+  "confirmPassword": "SecurePass@123",
+  "mobileNumber": "9876543210",
+  "countryCode": "91"
+}
+
+###
+
+### User Registration with Valid Data (USA)
+POST {{GRC.API_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@usa.com",
+  "password": "MyPassword@456",
+  "confirmPassword": "MyPassword@456",
+  "mobileNumber": "2125551234",
+  "countryCode": "1"
+}
+
+###
+
+### User Registration with Valid Data (UK)
+POST {{GRC.API_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@uk.com",
+  "password": "UKPass#789",
+  "confirmPassword": "UKPass#789",
+  "mobileNumber": "2071838750",
+  "countryCode": "44"
+}
+
+###
+
+### User Login
+POST {{GRC.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "SecurePass@123"
+}
 
 ###

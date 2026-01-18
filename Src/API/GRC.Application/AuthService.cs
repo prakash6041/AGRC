@@ -17,7 +17,7 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
-    public async Task<User?> RegisterAsync(string email, string password, int organizationId, string mobileNumber)
+    public async Task<User?> RegisterAsync(string email, string password, string mobileNumber, string countryCode)
     {
         _logger.LogInformation("Registration attempt for email: {Email}", email);
 
@@ -30,7 +30,7 @@ public class AuthService : IAuthService
         }
 
         // Validate mobile number
-        var mobileValidation = MobileNumberHelper.ValidateMobileNumber(mobileNumber);
+        var mobileValidation = MobileNumberHelper.ValidateMobileNumber(mobileNumber, countryCode);
         if (!mobileValidation.IsValid)
         {
             _logger.LogWarning("Mobile number validation failed for email {Email}: {Error}", email, mobileValidation.ErrorMessage);
@@ -45,12 +45,11 @@ public class AuthService : IAuthService
         }
 
         var passwordHash = PasswordHelper.HashPassword(password);
-        var normalizedMobile = MobileNumberHelper.NormalizeMobileNumber(mobileNumber);
+        var normalizedMobile = MobileNumberHelper.NormalizeMobileNumber(mobileNumber, countryCode);
         var user = new User
         {
             Email = email,
             PasswordHash = passwordHash,
-            OrganizationId = organizationId,
             RoleId = 1, // Default role
             MobileNumber = normalizedMobile
         };

@@ -2,6 +2,7 @@
 @using GRC.Desktop.Blazor.Models
 @using GRC.Desktop.Blazor.Services
 @using GRC.Desktop.Blazor.Stores
+@using GRC.Desktop.Blazor.Helpers
 @inject AuthService AuthService
 @inject AuthStore AuthStore
 @inject NavigationManager Navigation
@@ -35,25 +36,33 @@
                        @bind="RegisterModel.EmailAddress" />
                 @if (!string.IsNullOrEmpty(EmailError))
                 {
-                    <small class="text-danger-horizontal">@EmailError</small>
+                    <small class="text-danger" style="display: block; text-align: left;">@EmailError</small>
                 }
             </div>
         </div>
 
         <div class="form-group-horizontal">
             <label for="password" class="form-label-horizontal">Password</label>
-            <input type="password" class="form-control" id="password" placeholder="Enter password"
-                   @bind="RegisterModel.Password" />
+            <div style="flex: 1;">
+                <input type="password" class="form-control" id="password" placeholder="Enter password"
+                       @bind="RegisterModel.Password" @onblur="ValidatePassword" />
+                <small class="text-muted">Hint: Min 8 chars, 1 uppercase, lowercase, digit, special character</small>
+                @if (!string.IsNullOrEmpty(PasswordStrengthError))
+                {
+                    <small class="text-danger" style="display: block; text-align: left;">@PasswordStrengthError</small>
+                }
+            </div>
         </div>
 
         <div class="form-group-horizontal">
             <label for="confirmPassword" class="form-label-horizontal">Confirm Password</label>
             <div style="flex: 1;">
                 <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm password"
-                       @bind="RegisterModel.ConfirmPassword" />
+                       @bind="RegisterModel.ConfirmPassword" @onblur="ValidateConfirmPassword" />
+                <small class="text-muted">Hint: Must match the password above</small>
                 @if (!string.IsNullOrEmpty(PasswordError))
                 {
-                    <small class="text-danger-horizontal">@PasswordError</small>
+                    <small class="text-danger" style="display: block; text-align: left;">@PasswordError</small>
                 }
             </div>
         </div>
@@ -75,8 +84,27 @@
 
         <div class="form-group-horizontal">
             <label for="mobile" class="form-label-horizontal">Mobile Number</label>
-            <input type="tel" class="form-control" id="mobile" placeholder="Enter mobile number"
-                   @bind="RegisterModel.MobileNumber" />
+            <div style="flex: 1;">
+                <div class="input-group">
+                    <select class="form-select" id="countryCode" value="@RegisterModel.CountryCode" @onchange="OnCountryCodeChanged" style="max-width: 280px;">
+                        <option value="">-- Select Country --</option>
+                        @foreach (var country in Countries)
+                        {
+                            <option value="@country.Key">@country.Value (+@country.Key)</option>
+                        }
+                    </select>
+                    <input type="tel" class="form-control" id="mobile" placeholder="Enter mobile number (7-15 digits)"
+                           @bind="RegisterModel.MobileNumber" @onblur="ValidateMobileNumber" inputmode="numeric" />
+                </div>
+                @if (!string.IsNullOrEmpty(CountryCodeError))
+                {
+                    <small class="text-danger" style="display: block; text-align: left;">@CountryCodeError</small>
+                }
+                @if (!string.IsNullOrEmpty(MobileError))
+                {
+                    <small class="text-danger" style="display: block; text-align: left;">@MobileError</small>
+                }
+            </div>
         </div>
 
         @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -120,17 +148,30 @@
         OrganizationType = OrganizationType.Consultant 
     };
     
+    private Dictionary<string, string> Countries = new();
+    
     private string ErrorMessage = string.Empty;
     private string SuccessMessage = string.Empty;
     private string EmailError = string.Empty;
+    private string PasswordStrengthError = string.Empty;
     private string PasswordError = string.Empty;
+    private string CountryCodeError = string.Empty;
+    private string MobileError = string.Empty;
     private bool IsLoading = false;
+
+    protected override void OnInitialized()
+    {
+        Countries = MobileNumberValidationHelper.GetSupportedCountries();
+    }
 
     private async Task HandleRegister()
     {
-        // Validation
+        // Clear all errors
         EmailError = string.Empty;
+        PasswordStrengthError = string.Empty;
         PasswordError = string.Empty;
+        CountryCodeError = string.Empty;
+        MobileError = string.Empty;
         ErrorMessage = string.Empty;
         SuccessMessage = string.Empty;
 
@@ -146,15 +187,27 @@
             return;
         }
 
-        if (RegisterModel.Password != RegisterModel.ConfirmPassword)
+        // Validate password strength
+        var passwordValidation = PasswordValidationHelper.ValidatePasswordStrength(RegisterModel.Password);
+        if (!passwordValidation.IsValid)
         {
-            PasswordError = "Passwords do not match";
+            PasswordStrengthError = passwordValidation.ErrorMessage;
             return;
         }
 
-        if (RegisterModel.Password.Length < 8)
+        // Validate confirm password
+        var confirmValidation = PasswordValidationHelper.ValidateConfirmPassword(RegisterModel.Password, RegisterModel.ConfirmPassword);
+        if (!confirmValidation.IsValid)
         {
-            PasswordError = "Password must be at least 8 characters";
+            PasswordError = confirmValidation.ErrorMessage;
+            return;
+        }
+
+        // Validate mobile number
+        var mobileValidation = MobileNumberValidationHelper.ValidateMobileNumber(RegisterModel.MobileNumber, RegisterModel.CountryCode);
+        if (!mobileValidation.IsValid)
+        {
+            MobileError = mobileValidation.ErrorMessage;
             return;
         }
 
@@ -185,6 +238,46 @@
         }
     }
 
+    private void ValidatePassword()
+    {
+        var validation = PasswordValidationHelper.ValidatePasswordStrength(RegisterModel.Password);
+        PasswordStrengthError = validation.IsValid ? string.Empty : validation.ErrorMessage;
+    }
+
+    private void ValidateConfirmPassword()
+    {
+        var validation = PasswordValidationHelper.ValidateConfirmPassword(RegisterModel.Password, RegisterModel.ConfirmPassword);
+        PasswordError = validation.IsValid ? string.Empty : validation.ErrorMessage;
+    }
+
+    private void OnCountryCodeChanged(ChangeEventArgs e)
+    {
+        CountryCodeError = string.Empty;
+        RegisterModel.CountryCode = e.Value?.ToString() ?? string.Empty;
+    }
+
+    private void ValidateMobileNumber()
+    {
+        MobileError = string.Empty;
+        if (string.IsNullOrWhiteSpace(RegisterModel.MobileNumber))
+        {
+            MobileError = "Mobile number is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(RegisterModel.CountryCode))
+        {
+            CountryCodeError = "Please select a country.";
+            return;
+        }
+
+        var validation = MobileNumberValidationHelper.ValidateMobileNumber(RegisterModel.MobileNumber, RegisterModel.CountryCode);
+        if (!validation.IsValid)
+        {
+            MobileError = validation.ErrorMessage;
+        }
+    }
+
     private void HandleClear()
     {
         RegisterModel = new() 
@@ -194,6 +287,9 @@
         ErrorMessage = string.Empty;
         SuccessMessage = string.Empty;
         EmailError = string.Empty;
+        PasswordStrengthError = string.Empty;
         PasswordError = string.Empty;
+        CountryCodeError = string.Empty;
+        MobileError = string.Empty;
     }
 }
