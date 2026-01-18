@@ -1,0 +1,98 @@
+using Microsoft.AspNetCore.Mvc;
+using GRC.Application.Interfaces;
+using GRC.API.Models.Requests;
+using GRC.API.Models.Responses;
+using Microsoft.Extensions.Logging;
+
+namespace GRC.API.Controllers;
+
+/// <summary>
+/// Handles authentication operations including registration, login, and OTP verification.
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly IAuthService _authService;
+    private readonly ILogger<AuthController> _logger;
+
+    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    {
+        _authService = authService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Registers a new user.
+    /// </summary>
+    /// <param name="request">The registration details.</param>
+    /// <returns>A success response with user ID.</returns>
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        // Model validation
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            var errorResponse = new ErrorResponse { Message = "Validation failed: " + string.Join(", ", errors) };
+            return BadRequest(errorResponse);
+        }
+
+        // Additional password validation (confirm password matching)
+        if (request.Password != request.ConfirmPassword)
+        {
+            var errorResponse = new ErrorResponse { Message = "Passwords do not match" };
+            return BadRequest(errorResponse);
+        }
+
+        try
+        {
+            _logger.LogInformation("Processing registration request for email: {Email}", request.Email);
+            var user = await _authService.RegisterAsync(request.Email, request.Password, request.OrganizationId, request.MobileNumber);
+            var response = new AuthResponse
+            {
+                Message = "User registered successfully",
+                UserId = user?.Id
+            };
+            _logger.LogInformation("Registration successful for email: {Email}", request.Email);
+            return Ok(response);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("Registration validation error for email {Email}: {Error}", request.Email, ex.Message);
+            var errorResponse = new ErrorResponse { Message = ex.Message };
+            return BadRequest(errorResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Registration failed for email {Email}", request.Email);
+            var errorResponse = new ErrorResponse { Message = "Registration failed. Please try again." };
+            return BadRequest(errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Logs in a user.
+    /// </summary>
+    /// <param name="request">The login credentials.</param>
+    /// <returns>A response indicating login success.</returns>
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        var isValid = await _authService.LoginAsync(request.Email, request.Password);
+        if (!isValid)
+        {
+            var errorResponse = new ErrorResponse { Message = "Invalid credentials" };
+            return Unauthorized(errorResponse);
+        }
+
+        var response = new AuthResponse
+        {
+            Message = "Login successful"
+        };
+        return Ok(response);
+    }
+}
