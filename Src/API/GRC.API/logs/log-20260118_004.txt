@@ -1,0 +1,22 @@
+2026-01-18 17:53:14.655 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-01-18 17:53:14.941 +05:30 [INF] Processing registration request for email: user@example.com
+2026-01-18 17:53:14.953 +05:30 [INF] Registration attempt for email: user@example.com
+2026-01-18 17:53:14.957 +05:30 [WRN] Mobile number validation failed for email user@example.com: Mobile number length is invalid for the selected country.
+2026-01-18 17:53:14.962 +05:30 [WRN] Registration validation error for email user@example.com: Mobile number length is invalid for the selected country.
+2026-01-18 17:53:43.473 +05:30 [INF] Processing registration request for email: user@example.com
+2026-01-18 17:53:43.479 +05:30 [INF] Registration attempt for email: user@example.com
+2026-01-18 17:53:43.749 +05:30 [ERR] Registration failed for email user@example.com
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'table Users has no column named Active'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteScalar()
+   at System.Data.Common.DbCommand.ExecuteScalarAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Dapper.SqlMapper.ExecuteScalarImplAsync[T](IDbConnection cnn, CommandDefinition command) in /_/Dapper/SqlMapper.Async.cs:line 1241
+   at GRC.Infrastructure.Repositories.UserRepository.AddAsync(User user) in C:\Users\prakash\source\repos\prakash6041\AGRC\Src\API\GRC.Infrastructure\UserRepository.cs:line 43
+   at GRC.Application.Services.AuthService.RegisterAsync(String email, String password, String mobileNumber, String countryCode) in C:\Users\prakash\source\repos\prakash6041\AGRC\Src\API\GRC.Application\AuthService.cs:line 57
+   at GRC.API.Controllers.AuthController.Register(RegisterRequest request) in C:\Users\prakash\source\repos\prakash6041\AGRC\Src\API\GRC.API\Controllers\AuthController.cs:line 67

@@ -11,9 +11,11 @@ POST {{GRC.API_HostAddress}}/api/auth/register
 Content-Type: application/json
 
 {
+  "organizationType": 0,
   "email": "user@example.com",
   "password": "SecurePass@123",
   "confirmPassword": "SecurePass@123",
+  "roleType": 6,
   "mobileNumber": "9876543210",
   "countryCode": "91"
 }
@@ -25,9 +27,11 @@ POST {{GRC.API_HostAddress}}/api/auth/register
 Content-Type: application/json
 
 {
+  "organizationType": 1,
   "email": "user@usa.com",
   "password": "MyPassword@456",
   "confirmPassword": "MyPassword@456",
+  "roleType": 2,
   "mobileNumber": "2125551234",
   "countryCode": "1"
 }
@@ -39,9 +43,11 @@ POST {{GRC.API_HostAddress}}/api/auth/register
 Content-Type: application/json
 
 {
+  "organizationType": 0,
   "email": "user@uk.com",
   "password": "UKPass#789",
   "confirmPassword": "UKPass#789",
+  "roleType": 3,
   "mobileNumber": "2071838750",
   "countryCode": "44"
 }

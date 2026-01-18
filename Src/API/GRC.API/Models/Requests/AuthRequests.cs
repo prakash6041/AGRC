@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using GRC.Domain.Enums;
 
 namespace GRC.API.Models.Requests;
 
@@ -8,6 +8,17 @@ namespace GRC.API.Models.Requests;
 /// </summary>
 public class RegisterRequest
 {
+    /// <summary>
+    /// Gets or sets the organization type.
+    /// </summary>
+    /// <remarks>
+    /// Valid values:
+    /// - 0: Consultant
+    /// - 1: ClientOrganization
+    /// </remarks>
+    [Required(ErrorMessage = "Organization type is required")]
+    public OrganizationType OrganizationType { get; set; }
+
     /// <summary>
     /// Gets or sets the user's email address.
     /// </summary>
@@ -37,11 +48,28 @@ public class RegisterRequest
     /// <summary>
     /// Gets or sets the password confirmation.
     /// </summary>
-    /// <remarks>Must match the Password field exactly. Not serialized in API responses.</remarks>
+    /// <remarks>Must match the Password field exactly.</remarks>
     [Required(ErrorMessage = "Password confirmation is required")]
     [Compare("Password", ErrorMessage = "Passwords do not match")]
-    [JsonIgnore] // Don't serialize this field in API responses
     public string ConfirmPassword { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the role type for the new user.
+    /// </summary>
+    /// <remarks>
+    /// Valid values:
+    /// - 0: ManagementApprover
+    /// - 1: SuperAdmin
+    /// - 2: Admin
+    /// - 3: Approver
+    /// - 4: CheckerReviewer
+    /// - 5: Maker
+    /// - 6: ProcessOwner
+    /// - 7: ControlOwner
+    /// - 8: RiskOwner
+    /// </remarks>
+    [Required(ErrorMessage = "Role type is required")]
+    public RoleType RoleType { get; set; }
 
     /// <summary>
     /// Gets or sets the user's mobile number (without country code).

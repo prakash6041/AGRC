@@ -46,7 +46,7 @@
             <div style="flex: 1;">
                 <input type="password" class="form-control" id="password" placeholder="Enter password"
                        @bind="RegisterModel.Password" @onblur="ValidatePassword" />
-                <small class="text-muted">Hint: Min 8 chars, 1 uppercase, lowercase, digit, special character</small>
+                <small class="hint-text">Hint: Min 8 chars, 1 uppercase, lowercase, digit, special character</small>
                 @if (!string.IsNullOrEmpty(PasswordStrengthError))
                 {
                     <small class="text-danger" style="display: block; text-align: left;">@PasswordStrengthError</small>
@@ -59,7 +59,7 @@
             <div style="flex: 1;">
                 <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm password"
                        @bind="RegisterModel.ConfirmPassword" @onblur="ValidateConfirmPassword" />
-                <small class="text-muted">Hint: Must match the password above</small>
+                <small class="hint-text">Hint: Must match the password above</small>
                 @if (!string.IsNullOrEmpty(PasswordError))
                 {
                     <small class="text-danger" style="display: block; text-align: left;">@PasswordError</small>
@@ -86,7 +86,7 @@
             <label for="mobile" class="form-label-horizontal">Mobile Number</label>
             <div style="flex: 1;">
                 <div class="input-group">
-                    <select class="form-select" id="countryCode" value="@RegisterModel.CountryCode" @onchange="OnCountryCodeChanged" style="max-width: 280px;">
+                    <select class="form-select" id="countryCode" value="@RegisterModel.CountryCode" @onchange="OnCountryCodeChanged" style="max-width: 200px;">
                         <option value="">-- Select Country --</option>
                         @foreach (var country in Countries)
                         {

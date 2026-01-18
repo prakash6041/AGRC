@@ -1,4 +1,5 @@
 using GRC.Desktop.Blazor.Models;
+using GRC.Desktop.Blazor.Configuration;
 using System.Net.Http.Json;
 
 namespace GRC.Desktop.Blazor.Services
@@ -8,10 +9,10 @@ namespace GRC.Desktop.Blazor.Services
         private readonly HttpClient _httpClient;
         private readonly string _apiBaseUrl;
 
-        public AuthService(HttpClient httpClient)
+        public AuthService(HttpClient httpClient, ApiSettings apiSettings)
         {
             _httpClient = httpClient;
-            _apiBaseUrl = "https://localhost:7001/api"; // Configure this in appsettings
+            _apiBaseUrl = apiSettings.BaseUrl;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
